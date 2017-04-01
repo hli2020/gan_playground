@@ -1,3 +1,9 @@
+*.pth
+*.png
+*.tar.gz
+*.zip
+dcgan/cifar-10-batches-py
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
