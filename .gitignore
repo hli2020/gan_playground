@@ -1,3 +1,4 @@
+faces/
 *.DS_Store
 GAN/cifar10
 GAN/dcgan
