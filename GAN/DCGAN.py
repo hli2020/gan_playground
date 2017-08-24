@@ -41,7 +41,7 @@ opt.lr = 0.0002
 opt.beta1 = 0.5
 opt.n_eps = 25
 opt.gpu_ids = [1,2]
-opt.cuda = True
+opt.cuda = False #True
 
 print(opt)
 
@@ -217,7 +217,8 @@ for epoch in range(opt.n_eps):
         # fake data
         noise_v = Variable(noise.resize_(batch_size, nz, 1, 1).normal_(0, 1))
         fake = netG(noise_v)
-        output = netD(fake.detach())    # D(G(z))
+        output = netD(fake.detach())    # D(G(z)), MUST have detach here
+        # output = netD(fake)
         label_v = Variable(label.fill_(fake_label))
         errD_fake = criterion(output, label_v)
         errD_fake.backward()
@@ -229,7 +230,7 @@ for epoch in range(opt.n_eps):
         # (2) update G network: maximize log D(G(z))
         #########################
         netG.zero_grad()
-        label_v = Variable(label.resize_(batch_size).fill_(real_label))
+        label_v = Variable(label.resize_(batch_size).fill_(real_label))     # the label is "1" for G
         # must resize the label to actual batch_size since the last iter in the epoch may be smaller
         output = netD(fake)     # D(G(z)), where G(z) = fake
         errG = criterion(output, label_v)
@@ -248,5 +249,6 @@ for epoch in range(opt.n_eps):
 
     torch.save(netD.state_dict(), '%s/netD_epoch_%d.pth' % (opt.out_folder, epoch))
     torch.save(netG.state_dict(), '%s/netG_epoch_%d.pth' % (opt.out_folder, epoch))
+
 
 
