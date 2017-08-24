@@ -224,6 +224,7 @@ for epoch in range(opt.n_eps):
         errD_fake.backward()
         D_G_z1 = output.data.mean()
         errD = errD_fake + errD_real
+        # errD.backward()         # loss D and G will explode
         optm_D.step()
 
         #########################
@@ -234,7 +235,7 @@ for epoch in range(opt.n_eps):
         # must resize the label to actual batch_size since the last iter in the epoch may be smaller
         output = netD(fake)     # D(G(z)), where G(z) = fake
         errG = criterion(output, label_v)
-        errG.backward()
+        errG.backward()             # should network D also be computed gradients?
         D_G_z2 = output.data.mean()
         optm_G.step()
 
