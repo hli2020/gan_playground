@@ -209,23 +209,27 @@ for epoch in range(opt.n_eps):
         input_v = Variable(input)
         label_v = Variable(label)
 
-        output = netD(input_v)
-        errD_real = criterion(output, label_v)
-        errD_real.backward()
-        D_x = output.data.mean()
+
+        # errD_real.backward()
+        # D_x = output.data.mean()
 
         # fake data
         noise_v = Variable(noise.resize_(batch_size, nz, 1, 1).normal_(0, 1))
         fake = netG(noise_v)
-        output = netD(fake.detach())    # D(G(z)), MUST have detach here
+
+        label_v2 = Variable(label.fill_(fake_label))
+        input_var = torch.cat((input_v, fake.detach()), dim=0)
+        label_var = torch.cat((label_v, label_v2), dim=0)
+        output = netD(input_var)    # D(G(z)), MUST have detach here
         # output = netD(fake)
-        label_v = Variable(label.fill_(fake_label))
-        errD_fake = criterion(output, label_v)
-        errD_fake.backward()
-        D_G_z1 = output.data.mean()
-        errD = errD_fake + errD_real
-        # errD.backward()         # loss D and G will explode
+
+        errD = criterion(output, label_var)
+        #errD_fake.backward()
+        #D_G_z1 = output.data.mean()
+        # errD = errD_fake + errD_real
+        errD.backward()         # loss D and G will explode
         optm_D.step()
+        D_x = 0
 
         #########################
         # (2) update G network: maximize log D(G(z))
@@ -239,8 +243,8 @@ for epoch in range(opt.n_eps):
         D_G_z2 = output.data.mean()
         optm_G.step()
 
-        print('hyli-mac: [%d / %d][%d / %d] Loss_D: %.4f Loss_G: %.4f D(x): %.4f D(G(z)): %.4f / %.4f' %
-              (epoch, opt.n_eps, i, len(dataloader), errD.data[0], errG.data[0], D_x, D_G_z1, D_G_z2))
+        print('hyli-mac: [%d / %d][%d / %d] Loss_D: %.4f Loss_G: %.4f D(x): %.4f D(G(z)): %.4f / %.4f, real %.4f, fake %.4f' %
+              (epoch, opt.n_eps, i, len(dataloader), errD.data[0], errG.data[0], D_x, 0, D_G_z2, 0, 0))
 
         if i % 100 == 0:
             vutils.save_image(real_cpu, '%s/real_sample_epoch_%d_i_%d.png' % (opt.out_folder, epoch, i), normalize=True)
