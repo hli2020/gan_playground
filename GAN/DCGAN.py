@@ -201,7 +201,6 @@ for epoch in range(opt.n_eps):
         input_v = Variable(input)
         label_v = Variable(label)
 
-
         # errD_real.backward()
         # D_x = output.data.mean()
 
