@@ -209,22 +209,20 @@ for epoch in range(opt.n_eps):
         input_v = Variable(input)
         label_v = Variable(label)
 
-        output = netD(input_v)
-        errD_real = criterion(output, label_v)
+        output_real = netD(input_v)
+        errD_real = criterion(output_real, label_v)
         errD_real.backward()
-        D_x = output.data.mean()
+        D_x = output_real.data.mean()
 
         # fake data
         noise_v = Variable(noise.resize_(batch_size, nz, 1, 1).normal_(0, 1))
         fake = netG(noise_v)
-        output = netD(fake.detach())    # D(G(z)), MUST have detach here
-        # output = netD(fake)
+        output_fake = netD(fake.detach())    # D(G(z)), MUST have detach here
         label_v = Variable(label.fill_(fake_label))
-        errD_fake = criterion(output, label_v)
+        errD_fake = criterion(output_fake, label_v)
         errD_fake.backward()
-        D_G_z1 = output.data.mean()
+        D_G_z1 = output_fake.data.mean()
         errD = errD_fake + errD_real
-        # errD.backward()         # loss D and G will explode
         optm_D.step()
 
         #########################
