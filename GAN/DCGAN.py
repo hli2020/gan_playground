@@ -15,20 +15,17 @@ import torchvision.datasets as dset
 import torchvision.utils as vutils
 
 # Created by Hongyang, Aug 16 2017
-# run on my Macbook (cpu)
-# LSUN download:
-#       https://github.com/fyu/lsun
-#
 # Code refactored from the official pytorch example
-# I disable all GPU operations
 
-# update on Aug 17: add cuda functionality
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--dataset', required=True, help='cifar10 | lsun | fake')
-parser.add_argument('--dataroot', required=True, help='path to dataset')
+parser.add_argument('--dataroot', default='./', help='path to dataset')
 parser.add_argument('--out_folder', default='./dcgan/', help='folder to output images and model checkpoints')
-
+parser.add_argument('--batch_size', default=64, type=int)
+parser.add_argument('--imageSize', default=64, type=int)
+parser.add_argument('--resume_D_path', default='')
+parser.add_argument('--no_cuda', action='store_true', help='no use of gpu')
 opt = parser.parse_args()
 
 # put additional parameters here
@@ -41,7 +38,7 @@ opt.lr = 0.0002
 opt.beta1 = 0.5
 opt.n_eps = 25
 opt.gpu_ids = [1,2]
-opt.cuda = False #True
+opt.cuda = not opt.no_cuda
 
 print(opt)
 
@@ -66,9 +63,10 @@ if opt.dataset == 'cifar10':
                                T.ToTensor(),
                                T.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5)),
                            ]))
+elif opt.dataset == 'fashion-mnist':
+    pass
 elif opt.dataset == 'fake':
     dataset = dset.FakeData(image_size=(3, opt.imageSize, opt.imageSize), transform=T.ToTensor())
-
 assert dataset
 dataloader = torch.utils.data.DataLoader(dataset, batch_size=opt.batchSize,
                                          shuffle=True, num_workers=2)
@@ -114,8 +112,6 @@ class _netG(nn.Module):
 
     def forward(self, input):
         if isinstance(input.data, torch.cuda.FloatTensor) and self.ngpu > 1:
-            # multiple GPU case
-            # output = nn.parallel.data_parallel(self.main, input, range(self.ngpu))
             output = nn.parallel.data_parallel(self.main, input, self.gpu_ids)
         else:
             output = self.main(input)
@@ -135,7 +131,7 @@ class _netD(nn.Module):
         self.ngpu = len(gpu_ids)
         self.main = nn.Sequential(
             # first layer
-            nn.Conv2d(nc, ndf, 4, 2, 1, bias=False),
+            nn.Conv2d(nc, ndf, 4, 2, 1, bias=False),  # out size = W
             nn.LeakyReLU(0.2, inplace=True),
             # next state
             nn.Conv2d(ndf, ndf * 2, 4, 2, 1, bias=False),
@@ -150,14 +146,12 @@ class _netD(nn.Module):
             nn.BatchNorm2d(ndf * 8),
             nn.LeakyReLU(0.2, inplace=True),
             # final layer
-            nn.Conv2d(ndf * 8, 1, 4, 1, 0, bias=False),
+            nn.Conv2d(ndf * 8, 1, 4, 1, 0, bias=False),  # out size = W - 3
             nn.Sigmoid()
         )
 
     def forward(self, input):
         if isinstance(input.data, torch.cuda.FloatTensor) and self.ngpu > 1:
-            # multiple GPU case
-            # output = nn.parallel.data_parallel(self.main, input, range(self.ngpu))
             output = nn.parallel.data_parallel(self.main, input, self.gpu_ids)
         else:
             output = self.main(input)
@@ -178,8 +172,6 @@ label = torch.FloatTensor(opt.batchSize)
 real_label = 1
 fake_label = 0
 
-# if opt.cuda:
-#     pass
 if opt.cuda:
     netD.cuda()
     netG.cuda()

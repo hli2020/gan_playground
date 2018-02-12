@@ -1,3 +1,4 @@
+# import clarifai
 from clarifai.rest import ClarifaiApp
 app = ClarifaiApp()
 
