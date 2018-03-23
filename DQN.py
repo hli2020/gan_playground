@@ -15,6 +15,7 @@ import torchvision.transforms as T
 
 # Created by Hongyang, Aug 16 2017
 # run on my Macbook (cpu)
+# source: http://pytorch.org/tutorials/intermediate/reinforcement_q_learning.html
 
 
 class ReplayMem(object):

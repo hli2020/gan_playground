@@ -1,1 +1,1 @@
-# gan_playground
+# Basic and popular algorithms (GAN, DeepRL, etc.)
